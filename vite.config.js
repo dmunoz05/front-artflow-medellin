@@ -1,20 +1,14 @@
+import path from "path"
 import { defineConfig } from 'vite'
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react-swc'
-import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
-  resolve: {
+  plugins: [react(), tailwindcss()],
+   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
-      '@assets': path.resolve(__dirname, 'src/assets'),
-      '@components': path.resolve(__dirname, 'src/components'),
-      '@routes': path.resolve(__dirname, 'src/routes'),
-      '@utils': path.resolve(__dirname, 'src/utils'),
-      '@ui': path.resolve(__dirname, 'src/components/ui'),
-      '@lib': path.resolve(__dirname, 'src/lib'),
-      '@hooks': path.resolve(__dirname, 'src/hooks')
+      "@": path.resolve(__dirname, "./src"),
     },
   },
 })
