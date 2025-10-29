@@ -2,64 +2,43 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Upload, Instagram, Facebook, Twitter } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
+import React, { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import React, { useEffect, useState } from "react"
+import { toast, Toaster } from "sonner";
 import './App.css'
 
 const initialArtworks = [
   {
     id: 1,
-    title: "Medellín Dreams",
-    artist: "Sofia Martinez",
-    username: "sofia_art",
-    description: "A vibrant representation of our city's colorful streets and warm people.",
     imageUrl: "/colorful-abstract-painting-medellin-streets.jpg",
   },
   {
     id: 2,
-    title: "Mountain Sunrise",
-    artist: "Carlos Restrepo",
-    username: "carlos_paints",
-    description: "The beautiful mountains surrounding Medellín at dawn.",
     imageUrl: "/mountain-landscape-sunrise-painting.jpg",
   },
   {
     id: 3,
-    title: "Urban Rhythm",
-    artist: "Ana Gomez",
-    username: "ana_creative",
-    description: "The energy and movement of city life captured in bold strokes.",
     imageUrl: "/urban-abstract-art-colorful.jpg",
   },
   {
     id: 4,
-    title: "Flores del Valle",
-    artist: "Miguel Torres",
-    username: "miguel_art",
-    description: "Traditional flowers from the Aburrá Valley in watercolor.",
     imageUrl: "/watercolor-flowers-tropical.jpg",
   },
   {
     id: 5,
     title: "Metro Lines",
-    artist: "Laura Sanchez",
-    username: "laura_paints",
-    description: "An artistic interpretation of Medellín's iconic metro system.",
     imageUrl: "/geometric-metro-train-modern-art.jpg",
   },
   {
     id: 6,
-    title: "Cultural Mosaic",
-    artist: "David Ospina",
-    username: "david_creates",
-    description: "A celebration of our diverse cultural heritage.",
     imageUrl: "/cultural-mosaic-colorful-art.jpg",
   },
 ]
 
 function App() {
+  const [hasUploaded, setHasUploaded] = useState(false);
   const [artworks, setArtworks] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedArtwork, setSelectedArtwork] = useState(null)
@@ -107,7 +86,9 @@ function App() {
       const data = await response.json();
 
       if (response.ok) {
-        alert("✅ Obra subida correctamente");
+        toast.success("✅ Obra subida correctamente");
+        localStorage.setItem("art_uploaded", "true");
+        setHasUploaded(true);
 
         const imageUrl = URL.createObjectURL(formData.image);
 
@@ -125,21 +106,44 @@ function App() {
 
         document.getElementById("gallery")?.scrollIntoView({ behavior: "smooth" });
       } else {
-        alert("❌ Error: " + (data.message || "No se pudo subir la obra"));
+        toast.error("❌ Error al subir la obra" + (data.message ? ": " + data.message : ""));
       }
     } catch (error) {
       console.error("Error al subir la obra:", error);
-      alert("❌ Error al conectar con el servidor");
+      toast.error("❌ Error al subir la obra");
     }
   };
 
   const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setFormData({ ...formData, image: e.target.files[0] })
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    const allowedTypes = ["image/png", "image/jpg", "image/jpeg", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("❌ Solo se permiten imágenes PNG, JPG, JPEG o WEBP.");
+      e.target.value = "";
+      return;
     }
-  }
+
+    // Crear previsualización
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData({
+        ...formData,
+        image: file,
+        preview: reader.result, // guardamos la URL base64 temporal
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
 
   useEffect(() => {
+    const alreadySubmitted = localStorage.getItem("art_uploaded");
+    if (alreadySubmitted) {
+      setHasUploaded(true);
+    }
     getAllGallery().then(data => {
       if (data && data.status === 200 && data.data) {
         const fetchedArtworks = data.data.map(item => ({
@@ -186,7 +190,7 @@ function App() {
         </header>
 
         {/* Hero Section */}
-        <section id="home" className="relative h-[90vh] overflow-hidden flex items-center justify-center">
+        <section id="home" className="relative py-24 md:py-32 overflow-hidden">
           {/* Fondo de cuadrícula animada */}
           <div className="absolute inset-0 overflow-hidden">
             <div className="animate-scroll-slow flex w-[400%] h-full">
@@ -224,7 +228,7 @@ function App() {
               <span className="text-purple-300">de Medellín</span>
             </h2>
             <p className="text-xl md:text-2xl text-gray-200 mb-12 max-w-2xl mx-auto">
-              Un espacio donde el arte joven cobra vida digitalmente.
+              Un espacio donde el arte y la cultura cobra vida digitalmente.
             </p>
             <Button
               size="lg"
@@ -247,9 +251,9 @@ function App() {
 
             {loading ? (
               <div>
-                <div class="flex-col gap-4 w-full flex items-center justify-center">
-                  <div class="w-28 h-28 border-8 text-blue-400 text-4xl animate-spin border-gray-300 flex items-center justify-center border-t-blue-400 rounded-full">
-                    <svg viewBox="0 0 24 24" fill="currentColor" height="1em" width="1em" class="animate-ping">
+                <div className="flex-col gap-4 w-full flex items-center justify-center">
+                  <div className="w-28 h-28 border-8 text-blue-400 text-4xl animate-spin border-gray-300 flex items-center justify-center border-t-blue-400 rounded-full">
+                    <svg viewBox="0 0 24 24" fill="currentColor" height="1em" width="1em" className="animate-ping">
                       <path d="M12.001 4.8c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624C13.666 10.618 15.027 12 18.001 12c3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C16.337 6.182 14.976 4.8 12.001 4.8zm-6 7.2c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624 1.177 1.194 2.538 2.576 5.512 2.576 3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C10.337 13.382 8.976 12 6.001 12z"></path>
                     </svg>
                   </div>
@@ -283,98 +287,151 @@ function App() {
           </div>
         </section>
 
-        {/* Upload Section */}
-        <section id="upload" className="py-20 bg-gradient-to-br from-purple-50/50 to-blue-50/50">
-          <div className="container mx-auto px-6 max-w-2xl">
-            <h3 className="text-4xl font-serif font-bold text-center text-gray-900 mb-4">Comparte tu arte</h3>
-            <p className="text-center text-gray-600 mb-12">
-              Sube tus obras de arte y forma parte de nuestra comunidad creativa.
+        {hasUploaded ? (
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-semibold text-purple-600 mb-4">
+              🎨 ¡Gracias por compartir tu arte!
+            </h2>
+            <p className="text-gray-500">
+              Solo puedes subir una obra por usuario.
+              Si deseas reemplazarla, puedes borrar tus datos locales.
             </p>
-
-            <Card className="border-0 shadow-xl bg-white">
-              <CardContent className="p-8">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="artist" className="text-gray-700">
-                      Nombre de artista
-                    </Label>
-                    <Input
-                      id="artist"
-                      placeholder="Pon el nombre del artista"
-                      value={formData.artist}
-                      onChange={(e) => setFormData({ ...formData, artist: e.target.value })}
-                      required
-                      className="border-gray-200 focus:border-purple-400"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="title" className="text-gray-700">
-                      Título de la obra de arte
-                    </Label>
-                    <Input
-                      id="title"
-                      placeholder="Pon el titulo de la obra"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      required
-                      className="border-gray-200 focus:border-purple-400"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="title" className="text-gray-700">
-                      Usuario de instagram
-                    </Label>
-                    <Input
-                      id="title"
-                      placeholder="Pon tu usuario de instagram"
-                      value={formData.username}
-                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                      required
-                      className="border-gray-200 focus:border-purple-400"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description" className="text-gray-700">
-                      Descripción
-                    </Label>
-                    <Textarea
-                      id="description"
-                      placeholder="Dinos sobre tu obra de arte"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      required
-                      className="border-gray-200 focus:border-purple-400 min-h-24"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="image" className="text-gray-700">
-                      Imagen
-                    </Label>
-                    <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center hover:border-purple-400 transition-colors">
-                      <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                      <Input id="image" type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-                      <Label htmlFor="image" className="cursor-pointer flex justify-center text-purple-600 hover:text-purple-700 font-medium">
-                        {formData.image ? formData.image.name : "Click to upload or drag and drop"}
-                      </Label>
-                      <p className="text-sm text-gray-500 mt-2">PNG, JPG, GIF up to 10MB</p>
-                    </div>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 rounded-full shadow-lg hover:shadow-xl transition-all"
-                  >
-                    Subir Obra
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+            <button
+              onClick={() => {
+                localStorage.removeItem("art_uploaded");
+                setHasUploaded(false);
+              }}
+              className="mt-4 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition"
+            >
+              Permitir nueva subida
+            </button>
           </div>
-        </section>
+        ) : (
+          <section id="upload" className="py-20 bg-gradient-to-br from-purple-50/50 to-blue-50/50">
+            <div className="container mx-auto px-6 max-w-2xl">
+              <h3 className="text-4xl font-serif font-bold text-center text-gray-900 mb-4">Comparte arte y cultura</h3>
+              <p className="text-center text-gray-600 mb-12">
+                Sube tus obras de arte de tu comuna y forma parte de nuestra red creativa.
+              </p>
+              <Card className="border-0 shadow-xl bg-white">
+                <CardContent className="p-8">
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="artist" className="text-gray-700">
+                        Nombre de artista
+                      </Label>
+                      <Input
+                        id="artist"
+                        placeholder="Pon el nombre del artista"
+                        value={formData.artist}
+                        onChange={(e) => setFormData({ ...formData, artist: e.target.value })}
+                        required
+                        className="border-gray-200 focus:border-purple-400"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="title" className="text-gray-700">
+                        Título de la obra de arte
+                      </Label>
+                      <Input
+                        id="title"
+                        placeholder="Pon el titulo de la obra"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        required
+                        className="border-gray-200 focus:border-purple-400"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="title" className="text-gray-700">
+                        Usuario de instagram
+                      </Label>
+                      <Input
+                        id="title"
+                        placeholder="Pon tu usuario de instagram"
+                        value={formData.username}
+                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                        required
+                        className="border-gray-200 focus:border-purple-400"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="description" className="text-gray-700">
+                        Descripción
+                      </Label>
+                      <Textarea
+                        id="description"
+                        placeholder="Dinos sobre tu obra de arte"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        required
+                        className="border-gray-200 focus:border-purple-400 min-h-24"
+                      />
+                    </div>
+
+
+                    <div className="space-y-2">
+                      <Label htmlFor="image" className="text-gray-700">
+                        Imagen
+                      </Label>
+                      {/* Previsualización */}
+                      {formData.preview ? (
+                        <div className="w-full flex justify-center">
+                          <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200 shadow-md">
+                            <img
+                              src={formData.preview}
+                              alt="Vista previa"
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setFormData({ ...formData, image: null, preview: null })}
+                              className="absolute top-2 right-2 bg-white text-black hover:text-white rounded-full py-1 px-2 hover:bg-purple-600 transition"
+                              title="Eliminar imagen"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="border-2 border-dashed relative border-gray-200 rounded-lg p-8 text-center hover:border-purple-400 transition-colors">
+                          <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+
+                          {/* Input oculto */}
+                          <Input
+                            id="image"
+                            type="file"
+                            accept="image/png, image/jpg, image/jpeg, image/webp"
+                            onChange={handleFileChange}
+                            className="hidden"
+                          />
+
+                          <Label
+                            htmlFor="image"
+                            className="cursor-pointer flex justify-center text-purple-600 hover:text-purple-700 font-medium"
+                          >
+                            {formData.image ? "Cambiar imagen" : "Click para subir o arrastrar"}
+                          </Label>
+                          <p className="text-sm text-gray-500 mt-2">Formatos: PNG, JPG, JPEG, WEBP (máx. 10MB)</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 rounded-full shadow-lg hover:shadow-xl transition-all"
+                    >
+                      Subir Obra
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+        )}
 
         {/* About Section */}
         <section id="about" className="py-20 bg-white/50">
