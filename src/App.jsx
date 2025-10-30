@@ -38,6 +38,7 @@ const initialArtworks = [
 ]
 
 function App() {
+  var api = import.meta.env.VITE_API_URL || "https://back-artflow-medellin.vercel.app/server/v1"
   const [hasUploaded, setHasUploaded] = useState(false);
   const [artworks, setArtworks] = useState([])
   const [loading, setLoading] = useState(true)
@@ -58,7 +59,7 @@ function App() {
 
   const getAllGallery = async () => {
     try {
-      const response = await fetch("http://localhost:3000/server/v1/gallery/g/images");
+      const response = await fetch(`${api}/gallery/g/images`);
       const data = await response.json();
       return data;
     } catch (error) {
@@ -78,7 +79,7 @@ function App() {
       formDataToSend.append("username", formData.username);
       formDataToSend.append("image", formData.image);
 
-      const response = await fetch("http://localhost:3000/server/v1/gallery/p/image", {
+      const response = await fetch(`${api}/gallery/p/image`, {
         method: "POST",
         body: formDataToSend,
       });
