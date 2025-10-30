@@ -164,10 +164,10 @@ function App() {
     <>
       <div className="min-h-screen bg-gradient-to-br from-white via-purple-50/30 to-blue-50/30">
         {/* Header */}
-        <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-purple-100">
+        <header className="px-5 sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-purple-100">
           <nav className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-serif font-bold text-purple-900">Artflow Medellín</h1>
+              <a href="#home" ><h1 className="text-xl flex items-center justify-center font-serif font-bold text-purple-900">Artflow&nbsp;<img className="w-10 h-10" src="/favicon.png" /><span className="-left-1 relative" >edellín</span></h1></a>
               <div className="hidden md:flex items-center gap-8">
                 <a href="#home" className="text-sm font-medium text-gray-700 hover:text-purple-600 transition-colors">
                   Inicio
@@ -232,7 +232,7 @@ function App() {
             </p>
             <Button
               size="lg"
-              className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 text-lg rounded-full shadow-lg hover:shadow-xl transition-all"
+              className="bg-purple-600 cursor-pointer hover:bg-purple-700 text-white px-8 py-6 text-lg rounded-full shadow-lg hover:shadow-xl transition-all"
               onClick={() => document.getElementById("gallery")?.scrollIntoView({ behavior: "smooth" })}
             >
               Explorar Galería
@@ -246,7 +246,7 @@ function App() {
           <div className="container mx-auto px-6">
             <h3 className="text-4xl font-serif font-bold text-center text-gray-900 mb-4">Obras de arte destacadas </h3>
             <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-              Descubre la creatividad y el talento de jóvenes artistas de Medellín.
+              Descubre la creatividad, el arte y la cultura del talento artistico de Medellín.
             </p>
 
             {loading ? (
@@ -264,7 +264,7 @@ function App() {
                 {artworks.map((artwork, index) => (
                   <Card
                     key={artwork.id}
-                    className="group cursor-pointer overflow-hidden border-0 shadow-md hover:shadow-2xl transition-all duration-300 animate-fade-in-up bg-white"
+                    className="group cursor-pointer overflow-hidden border-0 py-0 shadow-md hover:shadow-2xl transition-all duration-300 animate-fade-in-up bg-white"
                     style={{ animationDelay: `${index * 100}ms` }}
                     onClick={() => handleArtworkClick(artwork)}
                   >
@@ -290,11 +290,10 @@ function App() {
         {hasUploaded ? (
           <div className="text-center py-12">
             <h2 className="text-2xl font-semibold text-purple-600 mb-4">
-              🎨 ¡Gracias por compartir tu arte!
+              🎨 ¡Gracias por compartir!
             </h2>
             <p className="text-gray-500">
-              Solo puedes subir una obra por usuario.
-              Si deseas reemplazarla, puedes borrar tus datos locales.
+              Solo puedes subir una obra por usuario, pero puedes explorar la galería y disfrutar del arte de otros.
             </p>
             <button
               onClick={() => {
@@ -443,7 +442,7 @@ function App() {
               su visión con el mundo.
             </p>
             <p className="text-lg text-gray-600 leading-relaxed">
-              Desde niños hasta adultos, todos son bienvenidos a subir y compartir sus obras de arte. ¡Únete a nosotros para celebrar el
+              Desde niños hasta adultos, todos son bienvenidos a subir y compartir obras de arte y cultura de la ciudad. ¡Únete a nosotros para celebrar el
               vibrante espíritu artístico de Medellín!
             </p>
           </div>
