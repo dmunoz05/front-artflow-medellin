@@ -38,14 +38,14 @@ const initialArtworks = [
 ]
 
 function App() {
-  var api = import.meta.env.VITE_API_URL || "https://back-artflow-medellin.vercel.app/server/v1"
+  var api = window.location.hostname == 'localhost' ? 'http://localhost:3000/server/v1' : import.meta.env.VITE_API_URL || "https://back-artflow-medellin.vercel.app/server/v1"
   const [hasUploaded, setHasUploaded] = useState(false);
   const [artworks, setArtworks] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedArtwork, setSelectedArtwork] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [formData, setFormData] = useState({
-    artist: "",
+    name_user: "",
     title: "",
     username: "",
     description: "",
@@ -73,7 +73,7 @@ function App() {
 
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append("artist_name", formData.artist);
+      formDataToSend.append("name_user", formData.name_user);
       formDataToSend.append("title", formData.title);
       formDataToSend.append("description", formData.description);
       formDataToSend.append("username", formData.username);
@@ -87,7 +87,7 @@ function App() {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success("✅ Obra subida correctamente");
+        toast.success("Obra subida correctamente");
         localStorage.setItem("art_uploaded", "true");
         setHasUploaded(true);
 
@@ -96,22 +96,22 @@ function App() {
         const newArtwork = {
           id: artworks.length + 1,
           title: formData.title,
-          artist: formData.artist,
+          name_user: formData.name_user,
           username: formData.username,
           description: formData.description,
           imageUrl: imageUrl,
         };
 
         setArtworks([...artworks, newArtwork]);
-        setFormData({ artist: "", title: "", description: "", image: null });
+        setFormData({ name_user: "", title: "", description: "", image: null });
 
         document.getElementById("gallery")?.scrollIntoView({ behavior: "smooth" });
       } else {
-        toast.error("❌ Error al subir la obra" + (data.message ? ": " + data.message : ""));
+        toast.error("Error al subir la obra" + (data.message ? ": " + data.message : ""));
       }
     } catch (error) {
       console.error("Error al subir la obra:", error);
-      toast.error("❌ Error al subir la obra");
+      toast.error("Error al subir la obra");
     }
   };
 
@@ -150,7 +150,7 @@ function App() {
         const fetchedArtworks = data.data.map(item => ({
           id: item.id,
           title: item.title,
-          artist: item.artist_name,
+          name_user: item.name_user,
           username: item.username,
           description: item.description,
           imageUrl: item.image_base64,
@@ -278,7 +278,7 @@ function App() {
                     </div>
                     <CardContent className="p-6">
                       <h4 className="text-xl font-semibold text-gray-900 mb-2">{artwork.title}</h4>
-                      <p className="text-sm text-purple-600 font-medium">by {artwork.artist}</p>
+                      <p className="text-sm text-purple-600 font-medium">by {artwork.name_user}</p>
                       <a href={'https://www.instagram.com/' + artwork.username} target="__blank" className="text-sm text-gray-500 mt-1 z-20 relative cursor-help ">{'@' + artwork.username}</a>
                     </CardContent>
                   </Card>
@@ -317,14 +317,14 @@ function App() {
                 <CardContent className="p-8">
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-2">
-                      <Label htmlFor="artist" className="text-gray-700">
-                        Nombre de artista
+                      <Label htmlFor="name_user" className="text-gray-700">
+                        Nombre
                       </Label>
                       <Input
-                        id="artist"
-                        placeholder="Pon el nombre del artista"
-                        value={formData.artist}
-                        onChange={(e) => setFormData({ ...formData, artist: e.target.value })}
+                        id="name_user"
+                        placeholder="Pon tu nombre"
+                        value={formData.name_user}
+                        onChange={(e) => setFormData({ ...formData, name_user: e.target.value })}
                         required
                         className="border-gray-200 focus:border-purple-400"
                       />
@@ -332,11 +332,11 @@ function App() {
 
                     <div className="space-y-2">
                       <Label htmlFor="title" className="text-gray-700">
-                        Título de la obra de arte
+                        Título
                       </Label>
                       <Input
                         id="title"
-                        placeholder="Pon el titulo de la obra"
+                        placeholder="Pon un titulo a la fotografía"
                         value={formData.title}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                         required
@@ -364,7 +364,7 @@ function App() {
                       </Label>
                       <Textarea
                         id="description"
-                        placeholder="Dinos sobre tu obra de arte"
+                        placeholder="Escribe información sobre tu fotografía"
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         required
@@ -485,7 +485,7 @@ function App() {
                     />
                   </div>
                   <div>
-                    <p className="text-purple-600 font-medium mb-2">by {selectedArtwork.artist}</p>
+                    <p className="text-purple-600 font-medium mb-2">by {selectedArtwork.name_user}</p>
                     <p className="text-gray-600 leading-relaxed">{selectedArtwork.description}</p>
                   </div>
                 </div>
