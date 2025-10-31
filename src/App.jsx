@@ -76,19 +76,22 @@ function App() {
 
   async function fetchFilterInstragram(username) {
     try {
-      const response = await axios.get(
-        `https://${apiHostRapidIntagram}/v1/info?username_or_id_or_url=${username}`,
+      const response = await axios.post(
+        `https://${apiHostRapidIntagram}/api/instagram/profile`,
+        {
+          "username": username
+        },
         {
           headers: {
-            "x-rapidapi-key": apiKeyRapidApi,
-            "x-rapidapi-host": apiHostRapidIntagram,
+            "X-RapidAPI-Key": apiKeyRapidApi,
+            "Content-Type": "application/json",
           },
         }
       );
-      if (!response?.data?.data) {
+      if (!response?.data?.result) {
         return 'https://www.gravatar.com/avatar/?d=mp';
       } else {
-        return response.data?.data?.hd_profile_pic_url_info?.url;
+        return response.data?.result.profile_pic_url_hd;
       }
     } catch (error) {
       console.error("Error al filtrar entrenadores:", error);
