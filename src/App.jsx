@@ -6,7 +6,8 @@ import React, { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
+import axios from "axios";
 import './App.css'
 
 const initialArtworks = [
@@ -38,16 +39,22 @@ const initialArtworks = [
 ]
 
 function App() {
-  var api = window.location.hostname == 'localhost' ? 'http://localhost:3000/server/v1' : import.meta.env.VITE_API_URL || "https://back-artflow-medellin.vercel.app/server/v1"
+  const api = window.location.hostname == 'localhost' ? 'http://localhost:3000/server/v1' : import.meta.env.VITE_API_URL;
+  alert(api)
+  const apiHostRapidIntagram = import.meta.env.VITE_API_HOST_RAPID_INSTAGRAM;
+  const apiKeyRapidApi = import.meta.env.VITE_API_KEY_RAPIDAPI;
+
   const [hasUploaded, setHasUploaded] = useState(false);
   const [artworks, setArtworks] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadingSubmit, setLoadingSubmit] = useState(false)
   const [selectedArtwork, setSelectedArtwork] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [formData, setFormData] = useState({
     name_user: "",
     title: "",
     username: "",
+    url_profile: "",
     description: "",
     image: null,
   })
@@ -68,7 +75,30 @@ function App() {
     }
   }
 
+  async function fetchFilterInstragram(username) {
+    try {
+      const response = await axios.get(
+        `https://${apiHostRapidIntagram}/v1/info?username_or_id_or_url=${username}`,
+        {
+          headers: {
+            "x-rapidapi-key": apiKeyRapidApi,
+            "x-rapidapi-host": apiHostRapidIntagram,
+          },
+        }
+      );
+      if (!response?.data?.data) {
+        return 'https://www.gravatar.com/avatar/?d=mp';
+      } else {
+        return response.data?.data?.hd_profile_pic_url_info?.url;
+      }
+    } catch (error) {
+      console.error("Error al filtrar entrenadores:", error);
+      return 'https://www.gravatar.com/avatar/?d=mp';
+    }
+  }
+
   const handleSubmit = async (e) => {
+    setLoadingSubmit(true);
     e.preventDefault();
 
     try {
@@ -87,7 +117,8 @@ function App() {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success("Obra subida correctamente");
+        setLoadingSubmit(false);
+        toast.success("Fotografía subida correctamente");
         localStorage.setItem("art_uploaded", "true");
         setHasUploaded(true);
 
@@ -107,11 +138,13 @@ function App() {
 
         document.getElementById("gallery")?.scrollIntoView({ behavior: "smooth" });
       } else {
-        toast.error("Error al subir la obra" + (data.message ? ": " + data.message : ""));
+        setLoadingSubmit(false);
+        toast.error("Error al subir la foto" + (data.message ? ": " + data.message : ""));
       }
     } catch (error) {
-      console.error("Error al subir la obra:", error);
-      toast.error("Error al subir la obra");
+      setLoadingSubmit(false);
+      console.error("Error al subir la foto:", error);
+      toast.error("Error al subir la foto");
     }
   };
 
@@ -139,27 +172,31 @@ function App() {
     reader.readAsDataURL(file);
   };
 
-
   useEffect(() => {
     const alreadySubmitted = localStorage.getItem("art_uploaded");
     if (alreadySubmitted) {
       setHasUploaded(true);
     }
-    getAllGallery().then(data => {
+
+    getAllGallery().then(async (data) => {
       if (data && data.status === 200 && data.data) {
-        const fetchedArtworks = data.data.map(item => ({
-          id: item.id,
-          title: item.title,
-          name_user: item.name_user,
-          username: item.username,
-          description: item.description,
-          imageUrl: item.image_base64,
-        }))
-        setArtworks(fetchedArtworks)
-        setLoading(false)
+        const fetchedArtworks = await Promise.all(
+          data.data.map(async (item) => ({
+            id: item.id,
+            title: item.title,
+            name_user: item.name_user,
+            username: item.username,
+            url_profile: await fetchFilterInstragram(item.username),
+            description: item.description,
+            imageUrl: item.image_base64,
+          }))
+        );
+
+        setArtworks(fetchedArtworks);
+        setLoading(false);
       }
-    })
-  }, [])
+    });
+  }, []);
 
   return (
     <>
@@ -279,7 +316,14 @@ function App() {
                     <CardContent className="p-6">
                       <h4 className="text-xl font-semibold text-gray-900 mb-2">{artwork.title}</h4>
                       <p className="text-sm text-purple-600 font-medium">by {artwork.name_user}</p>
-                      <a href={'https://www.instagram.com/' + artwork.username} target="__blank" className="text-sm text-gray-500 mt-1 z-20 relative cursor-help ">{'@' + artwork.username}</a>
+                      <div className="flex gap-1 mt-1 justify-start items-center">
+                        <img
+                          src={`${api}/external/g/instagram/proxy-img?url=${encodeURIComponent(artwork.url_profile)}`}
+                          alt={artwork.username}
+                          className="w-8 h-8 object-cover rounded-xl"
+                        />
+                        <a href={'https://www.instagram.com/' + artwork.username} target="__blank" className="text-sm text-gray-500 z-20 relative cursor-help ">{'@' + artwork.username}</a>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -307,130 +351,142 @@ function App() {
             </button>
           </div>
         ) : (
-          <section id="upload" className="py-20 bg-gradient-to-br from-purple-50/50 to-blue-50/50">
-            <div className="container mx-auto px-6 max-w-2xl">
-              <h3 className="text-4xl font-serif font-bold text-center text-gray-900 mb-4">Comparte arte y cultura</h3>
-              <p className="text-center text-gray-600 mb-12">
-                Sube tus obras de arte de tu comuna y forma parte de nuestra red creativa.
-              </p>
-              <Card className="border-0 shadow-xl bg-white">
-                <CardContent className="p-8">
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="name_user" className="text-gray-700">
-                        Nombre
-                      </Label>
-                      <Input
-                        id="name_user"
-                        placeholder="Pon tu nombre"
-                        value={formData.name_user}
-                        onChange={(e) => setFormData({ ...formData, name_user: e.target.value })}
-                        required
-                        className="border-gray-200 focus:border-purple-400"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="title" className="text-gray-700">
-                        Título
-                      </Label>
-                      <Input
-                        id="title"
-                        placeholder="Pon un titulo a la fotografía"
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        required
-                        className="border-gray-200 focus:border-purple-400"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="title" className="text-gray-700">
-                        Usuario de instagram
-                      </Label>
-                      <Input
-                        id="title"
-                        placeholder="Pon tu usuario de instagram"
-                        value={formData.username}
-                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                        required
-                        className="border-gray-200 focus:border-purple-400"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="description" className="text-gray-700">
-                        Descripción
-                      </Label>
-                      <Textarea
-                        id="description"
-                        placeholder="Escribe información sobre tu fotografía"
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        required
-                        className="border-gray-200 focus:border-purple-400 min-h-24"
-                      />
-                    </div>
-
-
-                    <div className="space-y-2">
-                      <Label htmlFor="image" className="text-gray-700">
-                        Imagen
-                      </Label>
-                      {/* Previsualización */}
-                      {formData.preview ? (
-                        <div className="w-full flex justify-center">
-                          <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200 shadow-md">
-                            <img
-                              src={formData.preview}
-                              alt="Vista previa"
-                              className="w-full h-full object-cover"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setFormData({ ...formData, image: null, preview: null })}
-                              className="absolute top-2 right-2 bg-white text-black hover:text-white rounded-full py-1 px-2 hover:bg-purple-600 transition"
-                              title="Eliminar imagen"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="border-2 border-dashed relative border-gray-200 rounded-lg p-8 text-center hover:border-purple-400 transition-colors">
-                          <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-
-                          {/* Input oculto */}
-                          <Input
-                            id="image"
-                            type="file"
-                            accept="image/png, image/jpg, image/jpeg, image/webp"
-                            onChange={handleFileChange}
-                            className="hidden"
-                          />
-
-                          <Label
-                            htmlFor="image"
-                            className="cursor-pointer flex justify-center text-purple-600 hover:text-purple-700 font-medium"
-                          >
-                            {formData.image ? "Cambiar imagen" : "Click para subir o arrastrar"}
-                          </Label>
-                          <p className="text-sm text-gray-500 mt-2">Formatos: PNG, JPG, JPEG, WEBP (máx. 10MB)</p>
-                        </div>
-                      )}
-                    </div>
-
-                    <Button
-                      type="submit"
-                      className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 rounded-full shadow-lg hover:shadow-xl transition-all"
-                    >
-                      Subir Obra
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
+          loadingSubmit ? (
+            <div>
+              <div className="flex-col gap-4 w-full flex items-center justify-center">
+                <div className="w-28 h-28 border-8 text-blue-400 text-4xl animate-spin border-gray-300 flex items-center justify-center border-t-blue-400 rounded-full">
+                  <svg viewBox="0 0 24 24" fill="currentColor" height="1em" width="1em" className="animate-ping">
+                    <path d="M12.001 4.8c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624C13.666 10.618 15.027 12 18.001 12c3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C16.337 6.182 14.976 4.8 12.001 4.8zm-6 7.2c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624 1.177 1.194 2.538 2.576 5.512 2.576 3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C10.337 13.382 8.976 12 6.001 12z"></path>
+                  </svg>
+                </div>
+              </div>
             </div>
-          </section>
+          ) : (
+            <section id="upload" className="py-20 bg-gradient-to-br from-purple-50/50 to-blue-50/50">
+              <div className="container mx-auto px-6 max-w-2xl">
+                <h3 className="text-4xl font-serif font-bold text-center text-gray-900 mb-4">Comparte arte y cultura</h3>
+                <p className="text-center text-gray-600 mb-12">
+                  Sube tus obras de arte de tu comuna y forma parte de nuestra red creativa.
+                </p>
+                <Card className="border-0 shadow-xl bg-white">
+                  <CardContent className="p-8">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="name_user" className="text-gray-700">
+                          Nombre
+                        </Label>
+                        <Input
+                          id="name_user"
+                          placeholder="Pon tu nombre"
+                          value={formData.name_user}
+                          onChange={(e) => setFormData({ ...formData, name_user: e.target.value })}
+                          required
+                          className="border-gray-200 focus:border-purple-400"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="title" className="text-gray-700">
+                          Título
+                        </Label>
+                        <Input
+                          id="title"
+                          placeholder="Pon un titulo a la fotografía"
+                          value={formData.title}
+                          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                          required
+                          className="border-gray-200 focus:border-purple-400"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="title" className="text-gray-700">
+                          Usuario de instagram
+                        </Label>
+                        <Input
+                          id="title"
+                          placeholder="Pon tu usuario de instagram"
+                          value={formData.username}
+                          onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                          required
+                          className="border-gray-200 focus:border-purple-400"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="description" className="text-gray-700">
+                          Descripción
+                        </Label>
+                        <Textarea
+                          id="description"
+                          placeholder="Escribe información sobre tu fotografía"
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          required
+                          className="border-gray-200 focus:border-purple-400 min-h-24"
+                        />
+                      </div>
+
+
+                      <div className="space-y-2">
+                        <Label htmlFor="image" className="text-gray-700">
+                          Imagen
+                        </Label>
+                        {/* Previsualización */}
+                        {formData.preview ? (
+                          <div className="w-full flex justify-center">
+                            <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200 shadow-md">
+                              <img
+                                src={formData.preview}
+                                alt="Vista previa"
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setFormData({ ...formData, image: null, preview: null })}
+                                className="absolute top-2 right-2 bg-white text-black hover:text-white rounded-full py-1 px-2 hover:bg-purple-600 transition"
+                                title="Eliminar imagen"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="border-2 border-dashed relative border-gray-200 rounded-lg p-8 text-center hover:border-purple-400 transition-colors">
+                            <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+
+                            {/* Input oculto */}
+                            <Input
+                              id="image"
+                              type="file"
+                              accept="image/png, image/jpg, image/jpeg, image/webp"
+                              onChange={handleFileChange}
+                              className="hidden"
+                            />
+
+                            <Label
+                              htmlFor="image"
+                              className="cursor-pointer flex justify-center text-purple-600 hover:text-purple-700 font-medium"
+                            >
+                              {formData.image ? "Cambiar imagen" : "Click para subir o arrastrar"}
+                            </Label>
+                            <p className="text-sm text-gray-500 mt-2">Formatos: PNG, JPG, JPEG, WEBP (máx. 10MB)</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <Button
+                        type="submit"
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 rounded-full shadow-lg hover:shadow-xl transition-all"
+                      >
+                        Subir Obra
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+          )
         )}
 
         {/* About Section */}
