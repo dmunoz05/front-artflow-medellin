@@ -157,7 +157,7 @@ function App() {
     // Validar tipo de archivo
     const allowedTypes = ["image/png", "image/jpg", "image/jpeg", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      toast.error("❌ Solo se permiten imágenes PNG, JPG, JPEG o WEBP.");
+      toast.error("Solo se permiten imágenes PNG, JPG, JPEG o WEBP.");
       e.target.value = "";
       return;
     }
