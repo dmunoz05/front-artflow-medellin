@@ -341,16 +341,7 @@ function App() {
             </h2>
             <p className="text-gray-500">
               Solo puedes subir una obra por usuario, pero puedes explorar la galería y disfrutar del arte de otros.
-            </p>
-            <button
-              onClick={() => {
-                localStorage.removeItem("art_uploaded");
-                setHasUploaded(false);
-              }}
-              className="mt-4 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition"
-            >
-              Permitir nueva subida
-            </button>
+            </p>          
           </div>
         ) : (
           loadingSubmit ? (
