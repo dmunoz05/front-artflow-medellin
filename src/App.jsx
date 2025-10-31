@@ -40,7 +40,6 @@ const initialArtworks = [
 
 function App() {
   const api = window.location.hostname == 'localhost' ? 'http://localhost:3000/server/v1' : import.meta.env.VITE_API_URL;
-  alert(api)
   const apiHostRapidIntagram = import.meta.env.VITE_API_HOST_RAPID_INSTAGRAM;
   const apiKeyRapidApi = import.meta.env.VITE_API_KEY_RAPIDAPI;
 
@@ -313,7 +312,7 @@ function App() {
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                     </div>
-                    <CardContent className="p-6">
+                    <CardContent className="px-6 pb-6">
                       <h4 className="text-xl font-semibold text-gray-900 mb-2">{artwork.title}</h4>
                       <p className="text-sm text-purple-600 font-medium">by {artwork.name_user}</p>
                       <div className="flex gap-1 mt-1 justify-start items-center">
