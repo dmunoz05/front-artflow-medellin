@@ -123,22 +123,7 @@ function App() {
         toast.success("Fotografía subida correctamente");
         localStorage.setItem("art_uploaded", "true");
         setHasUploaded(true);
-
-        const imageUrl = URL.createObjectURL(formData.image);
-
-        const newArtwork = {
-          id: artworks.length + 1,
-          title: formData.title,
-          name_user: formData.name_user,
-          username: formData.username,
-          description: formData.description,
-          imageUrl: imageUrl,
-        };
-
-        setArtworks([...artworks, newArtwork]);
         setFormData({ name_user: "", title: "", description: "", image: null });
-
-        document.getElementById("gallery")?.scrollIntoView({ behavior: "smooth" });
       } else {
         setLoadingSubmit(false);
         toast.error("Error al subir la foto" + (data.message ? ": " + data.message : ""));
@@ -205,7 +190,7 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-white via-purple-50/30 to-blue-50/30">
         {/* Header */}
         <header className="px-5 sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-purple-100">
-          <nav className="container mx-auto px-6 py-4">
+          <nav className="container mx-auto px-6 py-4 sm:block sm:justify-start flex justify-center">
             <div className="flex items-center justify-between">
               <a href="#home" ><h1 className="text-xl flex items-center justify-center font-serif font-bold text-purple-900">Artflow&nbsp;<img className="w-10 h-10" src="/favicon.png" /><span className="-left-1 relative" >edellín</span></h1></a>
               <div className="hidden md:flex items-center gap-8">
@@ -335,13 +320,16 @@ function App() {
         </section>
 
         {hasUploaded ? (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-semibold text-purple-600 mb-4">
+          <div className="text-center py-20 bg-green-50 px-6">
+            <h2 className="text-3xl font-semibold text-purple-600 mb-4">
               🎨 ¡Gracias por compartir!
             </h2>
             <p className="text-gray-500">
               Solo puedes subir una obra por usuario, pero puedes explorar la galería y disfrutar del arte de otros.
-            </p>          
+            </p>
+            <p className="text-gray-500">
+              Recuerda que 12 horas después de subida la foto, sera revisada por el equipo de Artflow Medellín.
+            </p>
           </div>
         ) : (
           loadingSubmit ? (
